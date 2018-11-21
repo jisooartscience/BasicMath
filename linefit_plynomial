@@ -1,0 +1,113 @@
+% Script for fitting the numver of projects
+
+clear all;      %clear workspace
+clc;            %clear command window
+close all;      %close figures
+ 
+
+% Two datasets (funded & non-funded)
+f=[2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016; 373, 3772, 10746, 16903, 19271, 22233,  22036, 18823];
+nonf= [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016; 501, 4825, 12516, 22749, 24823, 44325, 54831, 39251];
+
+
+for k=1:7;                                  % decide a degree of polynomial
+    
+    % SCATTER DATA SET
+    figure(1); 
+    scatter(f(1,:), f(2,:), 50,'k');        % scatter the original funded data by black dots
+    hold on; grid on;
+    scatter(nonf(1,:), nonf(2,:), 50,'r');  % scatter the original non-funded data by red dots
+    
+    % FUNDED
+    V_y=fliplr(vander(f(1,:)));             % make a VANDERMONDE matrix
+    V_y(:,[k+2:size(V_y,1)])=[];            % Revise the mtrix according to degree of polynomial              
+    R_f=pinv(V_y)*f(2,:)';                  % '\' makes error, so I used pinv which is a pseudo-inverse to caculate a determinent
+    % NON-FUNDED
+    R_nonf=pinv(V_y)*nonf(2,:)';            % caculate the determinent
+    
+    for kk=k+2:9;                           % make a form of coeeficient
+          R_nonf(kk)=0;
+          R_f(kk)=0;
+    end  
+    
+    % Fitted lines for FUNDED and NON-FUNDED
+    X_f= [2009:1:2020];                      % x axis
+    Y_f = 0; Y_nonf=0;                       % calculate the fitted line based on the coeeficient
+    for i=1:8;
+        Y_f= Y_f+ R_f(i).*(X_f.^(i-1));
+        Y_nonf= Y_nonf+ R_nonf(i).*(X_f.^(i-1));
+    end
+
+    % PLOT the fitted lines according to the degree
+    plot(X_f, Y_f, 'linewidth', 2); hold on;     % funded
+    plot(X_f, Y_nonf, 'linewidth', 2); hold on;  % non-funded    
+    title(['Fitted Lines - Degree of Polynomial : ' ,num2str(k)], 'fontsize', 16); hold on;
+    xlim([2009, 2020]);
+    xlabel(['Year']);
+    ylabel(['Projects']);
+     
+drawnow;
+pause(0.5);
+    
+%     Err_k(k)=k;             
+%     Y_f([9:12])=[];
+%     Y_nonf([9:12])=[];
+%     Err_fund_sum(k)=sum((Y_f-f(2,:)).^2);
+%     Err_nonfund_sum(k)=sum((Y_nonf-nonf(2,:)).^2);
+
+end
+
+%     figure(2);  
+%     plot(Err_k, log(Err_fund_sum)); hold on;
+%     plot(Err_k, log(Err_nonfund_sum));
+%     title(['Log of Sum of squared erros'], 'fontsize', 16);
+%     xlabel(['Degree of Polynomial']); 
+%     ylabel(['Sum of Error']);
+
+
+
+% " DO THE DEGREES DIFFER? "
+
+% From degree 2 to 7, fitted lines looks so similar.
+% So I checked whether the algorithms work properly by verifying the sum of error.
+% From the sum of the squared error, It shows continous decrease of the error value.
+% Therefore we can conclude algorithms work properly, even we can't clearly notice a difference between the fitted lines. 
+
+
+%% BEST-fit MODEL
+
+% For fit quality, line should pass most of the original data.
+% As original data can have an measurement error, line shouldn't pass the data 100%.
+% when polynomial of degree is 2, the line approximately passes 80% of data.
+% Therefore the best fit model is when the degree is 2.
+
+k=2;
+V_y=fliplr(vander(f(1,:)));             % make a VANDERMONDE matrix
+V_y(:,[k+2:size(V_y,1)])=[];            % Revise the mtrix according to degree of polynomial              
+R_f=pinv(V_y)*f(2,:)';                  % Calculate a determinent   
+% NON-FUNDED
+R_nonf=pinv(V_y)*nonf(2,:)';    
+
+for kk=k+2:9;                           % make a form of coeeficient
+  R_nonf(kk)=0;
+  R_f(kk)=0;
+end  
+    
+        
+%% PREDICT the number of projects in 2020
+X_f= 2020;                               % predict the number of projects in 2020
+Y_f = 0; Y_nonf=0;                       % Make a function for predict based on the coeeficients.
+for i=1:8;
+    Y_f= Y_f+ R_f(i).*(X_f.^(i-1));
+    Y_nonf= Y_nonf+ R_nonf(i).*(X_f.^(i-1));
+end
+
+figure(1); hold on;                     % scatter the predicted data points into the figure.
+scatter(X_f, Y_f, 80, 'k', 'filled');
+scatter(X_f, Y_nonf, 80, 'r', 'filled');
+
+
+
+
+
+
